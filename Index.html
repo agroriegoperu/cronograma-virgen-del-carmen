@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gantt – Sistema de Riego</title>
+  <style>
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f3f5f8;color:#123a5c}
+    #carga{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:14px;text-align:center;padding:16px}
+    .spin{width:38px;height:38px;border:4px solid #c9d6e3;border-top-color:#123a5c;border-radius:50%;animation:g 1s linear infinite}
+    @keyframes g{to{transform:rotate(360deg)}}
+    .err{color:#c0392b;max-width:520px}
+  </style>
+</head>
+<body>
+  <div id="carga">
+    <div class="spin"></div>
+    <div>Cargando cronograma…</div>
+  </div>
+
+<script>
+(function () {
+  // ==========================================================
+  //  PEGA AQUÍ la URL de tu implementación de Apps Script
+  //  (la que termina en /exec, con "Ejecutar como: Yo"
+  //   y acceso "Cualquier persona")
+  // ==========================================================
+  var API = 'PEGA_AQUI_TU_URL_EXEC';
+
+  var params = new URLSearchParams(location.search);
+  var etapa = params.get('etapa') || '';
+
+  function llamar(tipo, et) {
+    var url = API + '?api=' + tipo + '&etapa=' + encodeURIComponent(et || '') + '&_=' + Date.now();
+    return fetch(url, { redirect: 'follow' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('El servidor respondió ' + r.status);
+        return r.json();
+      })
+      .then(function (j) {
+        if (!j.ok) throw new Error(j.error || 'Error desconocido');
+        return j;
+      });
+  }
+
+  // Reemplazo de google.script.run para que el Gantt funcione fuera de Apps Script
+  function crearRun(ok, fail) {
+    return {
+      withSuccessHandler: function (f) { return crearRun(f, fail); },
+      withFailureHandler: function (f) { return crearRun(ok, f); },
+      getDatos: function (et) {
+        llamar('datos', et)
+          .then(function (j) { if (ok) ok(j.data); })
+          .catch(function (e) { if (fail) fail(e); });
+      }
+    };
+  }
+  window.google = { script: { run: crearRun() } };
+
+  function mostrarError(msg) {
+    document.getElementById('carga').innerHTML =
+      '<div class="err"><b>No se pudo cargar el Gantt.</b><br>' + msg + '</div>';
+  }
+
+  if (API.indexOf('/exec') < 0) {
+    mostrarError('Falta pegar la URL /exec de Apps Script en el archivo index.html.');
+    return;
+  }
+
+  // Trae la interfaz (Index.html) desde Apps Script y la dibuja aquí
+  llamar('html', etapa)
+    .then(function (j) {
+      document.open();
+      document.write(j.html);
+      document.close();
+      document.title = 'Gantt – Sistema de Riego';
+      if (!document.querySelector('meta[name="viewport"]')) {
+        var m = document.createElement('meta');
+        m.name = 'viewport';
+        m.content = 'width=device-width, initial-scale=1';
+        document.head.appendChild(m);
+      }
+    })
+    .catch(function (e) { mostrarError(e.message); });
+})();
+</script>
+</body>
+</html>
