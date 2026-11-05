@@ -12,7 +12,7 @@
 <body>
   <iframe id="gantt" allow="clipboard-write"></iframe>
   <script>
-    var URL_GANTT = 'https://script.google.com/macros/s/AKfycbzOvy83NyCneLVyJuN1ZiEFi2Yp0R-kn3JxCc2DY3olFbKLRfDo5InLH6Jiue3GTzO3Wg/exec';
+    var URL_GANTT = 'https://script.google.com/macros/s/AKfycbw6Lt13j-HWZxNczWPkkesG6vKQXqtwlVQ3up3XxVVhHhBRcC3Vpn-cJhHDCJeApzzwOA/exec';
     var etapa = new URLSearchParams(location.search).get('etapa');
     document.getElementById('gantt').src = URL_GANTT + (etapa ? '?etapa=' + encodeURIComponent(etapa) : '');
   </script>
